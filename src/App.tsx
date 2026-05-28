@@ -24,6 +24,7 @@ import DashboardStats from './components/DashboardStats';
 import ProductTable from './components/ProductTable';
 import ProductForm from './components/ProductForm';
 import SupabaseHelp from './components/SupabaseHelp';
+import OrdersTab from './components/OrdersTab';
 
 export default function App() {
   // Authentication State
@@ -52,7 +53,7 @@ export default function App() {
   const [dbError, setDbError] = useState<string | null>(null);
 
   // Active Tab State
-  const [activeTab, setActiveTab] = useState<'catalogo' | 'ajuda'>('catalogo');
+  const [activeTab, setActiveTab] = useState<'catalogo' | 'pedidos' | 'ajuda'>('catalogo');
 
   // Supabase Connection State Setup
   const [supabaseConfig, setSupabaseConfig] = useState<SupabaseConfig>({
@@ -368,6 +369,16 @@ export default function App() {
               Gerenciar Catálogo
             </button>
             <button
+              onClick={() => setActiveTab('pedidos')}
+              className={`pb-2.5 text-sm font-bold tracking-wide border-b-2 transition relative cursor-pointer ${
+                activeTab === 'pedidos' 
+                  ? 'border-pink-600 text-pink-600' 
+                  : 'border-transparent text-slate-500 hover:text-slate-800'
+              }`}
+            >
+              Pedidos
+            </button>
+            <button
               onClick={() => setActiveTab('ajuda')}
               className={`pb-2.5 text-sm font-bold tracking-wide border-b-2 transition relative cursor-pointer ${
                 activeTab === 'ajuda' 
@@ -399,6 +410,8 @@ export default function App() {
             onConfigChanged={handleConfigChanged} 
             supabaseConfig={supabaseConfig} 
           />
+        ) : activeTab === 'pedidos' ? (
+          <OrdersTab onShowNotification={showNotification} />
         ) : (
           <div className="space-y-6 animate-fade-in">
             {/* Dashboard Analytics Card Row */}

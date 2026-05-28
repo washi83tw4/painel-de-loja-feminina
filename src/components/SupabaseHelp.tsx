@@ -14,10 +14,13 @@ export default function SupabaseHelp({ onConfigChanged, supabaseConfig }: Supaba
   const [customKey, setCustomKey] = useState('');
   const [saveSuccess, setSaveSuccess] = useState(false);
 
-  const sqlCode = `-- 1. Execute este comando no Editor de SQL do seu painel Supabase
--- para criar a tabela de produtos para seu painel de roupas.
+  const sqlCode = `-- 1. Execute estes comandos no Editor de SQL do seu painel Supabase
+-- para criar tanto as tabelas de PRODUTOS quanto de PEDIDOS (ORDERS)
 
-create table produtos (
+-- =======================================================
+-- TABELA DE PRODUTOS
+-- =======================================================
+create table if not exists produtos (
   id uuid default gen_random_uuid() primary key,
   created_at timestamp with time zone default timezone('utc'::text, now()) not null,
   nome text not null,
@@ -30,8 +33,10 @@ create table produtos (
   tamanhos_estoque jsonb not null default '{}'::jsonb -- Grade de estoques específicos (ex: {"P": 5, "M": 0, "G": 10})
 );
 
--- 2. Habilite políticas de acesso se necessário (ou desabilite RLS para simulação rápida):
 alter table produtos enable row level security;
+
+drop policy if exists "Permitir leitura pública de produtos" on produtos;
+drop policy if exists "Permitir controle total para administradores" on produtos;
 
 create policy "Permitir leitura pública de produtos" 
 on produtos for select 
@@ -40,6 +45,51 @@ using (true);
 create policy "Permitir controle total para administradores" 
 on produtos for all 
 using (true) 
+with check (true);
+
+-- =======================================================
+-- TABELA DE PEDIDOS (ORDERS)
+-- =======================================================
+create table if not exists orders (
+  id uuid default gen_random_uuid() primary key,
+  created_at timestamp with time zone default timezone('utc'::text, now()) not null,
+
+  customer_name text not null,
+  customer_email text,
+  customer_phone text not null,
+  customer_cpf text,
+
+  address_zipcode text not null,
+  address_street text not null,
+  address_number text not null,
+  address_complement text,
+  address_neighborhood text not null,
+  address_city text not null,
+  address_state text not null,
+
+  notes text,
+  items jsonb not null, -- [{ id, nome, preco, quantidade, tamanho, imagem }]
+  total numeric not null default 0,
+  status text not null default 'novo'
+);
+
+alter table orders enable row level security;
+
+drop policy if exists "Permitir criar pedidos" on orders;
+drop policy if exists "Permitir ler pedidos" on orders;
+drop policy if exists "Permitir atualizar pedidos" on orders;
+
+create policy "Permitir criar pedidos"
+on orders for insert
+with check (true);
+
+create policy "Permitir ler pedidos"
+on orders for select
+using (true);
+
+create policy "Permitir atualizar pedidos"
+on orders for update
+using (true)
 with check (true);
 `;
 
