@@ -1,0 +1,6 @@
+{
+  "name": "Painel Admin - Loja de Roupas",
+  "description": "Painel administrador completo para gerenciar estoque, produtos, preços e categorias de uma loja de roupas com integração Supabase.",
+  "requestFramePermissions": [],
+  "majorCapabilities": ["MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"]
+}
