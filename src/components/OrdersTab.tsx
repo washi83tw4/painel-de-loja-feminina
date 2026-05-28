@@ -164,19 +164,44 @@ export default function OrdersTab({ onShowNotification }: OrdersTabProps) {
     }
   };
 
-  const formatCnpjCpf = (val?: string) => {
+  // Helper to safely get list of items
+  const getSafeItemsList = (items: any): any[] => {
+    if (!items) return [];
+    if (Array.isArray(items)) return items;
+    if (typeof items === 'string') {
+      try {
+        const parsed = JSON.parse(items);
+        if (Array.isArray(parsed)) return parsed;
+      } catch (e) {
+        console.error("Falha ao analisar JSON dos itens do pedido:", e);
+      }
+    }
+    return [];
+  };
+
+  // Helper to safely get short order ID
+  const getShortOrderId = (id: any): string => {
+    if (!id) return '';
+    const idStr = String(id);
+    return idStr.startsWith('ord-') ? idStr.replace('ord-', '') : idStr.substring(0, 8);
+  };
+
+  const formatCnpjCpf = (val?: any) => {
     if (!val) return 'Não preenchido';
-    const clean = val.replace(/\D/g, '');
+    const clean = String(val).replace(/\D/g, '');
     if (clean.length === 11) {
       return clean.replace(/(\d{3})(\d{3})(\d{3})(\d{2})/, "$1.$2.$3-$4");
     }
-    return val;
+    return String(val);
   };
 
-  const formatDate = (isoStr?: string) => {
-    if (!isoStr) return '';
+  const formatDate = (isoStr?: any) => {
+    if (!isoStr) return 'Não informada';
     try {
       const date = new Date(isoStr);
+      if (isNaN(date.getTime())) {
+        return String(isoStr);
+      }
       return date.toLocaleDateString('pt-BR', {
         day: '2-digit',
         month: '2-digit',
@@ -185,7 +210,7 @@ export default function OrdersTab({ onShowNotification }: OrdersTabProps) {
         minute: '2-digit'
       });
     } catch (e) {
-      return isoStr;
+      return String(isoStr);
     }
   };
 
@@ -375,7 +400,7 @@ export default function OrdersTab({ onShowNotification }: OrdersTabProps) {
                         
                         {/* ID */}
                         <td className="py-3.5 px-4 font-mono font-bold text-slate-600">
-                          #{order.id.startsWith('ord-') ? order.id.replace('ord-', '') : order.id.substring(0, 8)}
+                          #{getShortOrderId(order.id)}
                         </td>
                         
                         {/* Date */}
@@ -385,14 +410,14 @@ export default function OrdersTab({ onShowNotification }: OrdersTabProps) {
                         
                         {/* Cliente */}
                         <td className="py-3.5 px-4">
-                          <div className="font-bold text-slate-900">{order.customer_name}</div>
-                          <div className="text-[10px] text-slate-500 font-mono mt-0.5">{order.customer_phone}</div>
+                          <div className="font-bold text-slate-900">{order.customer_name || 'Desconhecido'}</div>
+                          <div className="text-[10px] text-slate-500 font-mono mt-0.5">{order.customer_phone || 'Sem telefone'}</div>
                         </td>
                         
                         {/* Itens Count */}
                         <td className="py-3.5 px-4 text-center">
                           <span className="inline-flex items-center justify-center px-2 py-0.5 bg-slate-100 text-slate-700 font-extrabold rounded-full text-[10px]">
-                            {order.items?.reduce((accum, i) => accum + (i.quantidade || 1), 0) || 0}
+                            {getSafeItemsList(order.items).reduce((accum, i) => accum + (i?.quantidade || 1), 0)}
                           </span>
                         </td>
                         
@@ -433,12 +458,12 @@ export default function OrdersTab({ onShowNotification }: OrdersTabProps) {
               {filteredOrders.map(order => {
                 const statusInfo = getStatusStyle(order.status);
                 const StatusIcon = statusInfo.icon;
-                const itemsCount = order.items?.reduce((accum, i) => accum + (i.quantidade || 1), 0) || 0;
+                const itemsCount = getSafeItemsList(order.items).reduce((accum, i) => accum + (i?.quantidade || 1), 0);
                 return (
                   <div key={order.id} className="p-4 space-y-3 bg-white hover:bg-slate-50/50 transition">
                     <div className="flex items-center justify-between">
                       <span className="font-mono font-bold text-slate-550 text-xs">
-                        #{order.id.startsWith('ord-') ? order.id.replace('ord-', '') : order.id.substring(0, 8)}
+                        #{getShortOrderId(order.id)}
                       </span>
                       <span className="text-[10px] text-slate-400">
                         {formatDate(order.created_at)}
@@ -446,8 +471,8 @@ export default function OrdersTab({ onShowNotification }: OrdersTabProps) {
                     </div>
 
                     <div>
-                      <h6 className="font-bold text-slate-900 text-sm">{order.customer_name}</h6>
-                      <span className="text-xs text-slate-500 block mt-0.5">{order.customer_phone}</span>
+                      <h6 className="font-bold text-slate-900 text-sm">{order.customer_name || 'Desconhecido'}</h6>
+                      <span className="text-xs text-slate-500 block mt-0.5">{order.customer_phone || 'Sem telefone'}</span>
                     </div>
 
                     <div className="flex items-center justify-between pt-1">
@@ -500,7 +525,7 @@ export default function OrdersTab({ onShowNotification }: OrdersTabProps) {
                   Acompanhamento de Venda
                 </span>
                 <h4 className="text-sm font-bold flex items-center gap-1.5">
-                  Pedido #{selectedOrder.id.startsWith('ord-') ? selectedOrder.id.replace('ord-', '') : selectedOrder.id.substring(0, 8)}
+                  Pedido #{getShortOrderId(selectedOrder.id)}
                   <span className="text-xs text-slate-400 font-normal">
                     &bull; {formatDate(selectedOrder.created_at)}
                   </span>
@@ -662,28 +687,29 @@ export default function OrdersTab({ onShowNotification }: OrdersTabProps) {
                       </tr>
                     </thead>
                     <tbody className="divide-y divide-slate-100">
-                      {selectedOrder.items?.map((item, idx) => {
-                        const itemSubtotal = (item.preco || 0) * (item.quantidade || 1);
+                      {getSafeItemsList(selectedOrder.items).map((item, idx) => {
+                        const itemSubtotal = (item?.preco || 0) * (item?.quantidade || 1);
+                        const itemName = item?.nome || 'Produto';
                         return (
-                          <tr key={item.id || idx}>
+                          <tr key={(item?.id || '') + idx}>
                             
                             {/* Product Info Preview */}
                             <td className="py-2.5 px-3">
                               <div className="flex items-center gap-2">
-                                {item.imagem ? (
+                                {item?.imagem ? (
                                   <img 
                                     src={item.imagem} 
-                                    alt={item.nome}
+                                    alt={itemName}
                                     referrerPolicy="no-referrer"
                                     className="w-8 h-8 rounded-lg object-cover border border-slate-150 shrink-0"
                                   />
                                 ) : (
                                   <div className="w-8 h-8 rounded-lg bg-pink-50 border border-pink-100 flex items-center justify-center text-xs font-bold text-pink-600 shrink-0 uppercase">
-                                    {item.nome.charAt(0)}
+                                    {itemName.charAt(0)}
                                   </div>
                                 )}
                                 <div>
-                                  <span className="font-bold text-slate-900 block leading-tight">{item.nome}</span>
+                                  <span className="font-bold text-slate-900 block leading-tight">{itemName}</span>
                                 </div>
                               </div>
                             </td>
@@ -691,18 +717,18 @@ export default function OrdersTab({ onShowNotification }: OrdersTabProps) {
                             {/* Size */}
                             <td className="py-2.5 px-3 text-center">
                               <span className="px-1.5 py-0.5 bg-pink-50 text-pink-700 text-[10px] font-black rounded border border-pink-100 uppercase">
-                                {item.tamanho || 'único'}
+                                {item?.tamanho || 'único'}
                               </span>
                             </td>
 
                             {/* Quantity */}
                             <td className="py-2.5 px-3 text-center font-bold text-slate-800">
-                              x{item.quantidade || 1}
+                              x{item?.quantidade || 1}
                             </td>
 
                             {/* Unit price */}
                             <td className="py-2.5 px-3 text-right text-slate-500 font-mono">
-                              {Number(item.preco || 0).toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' })}
+                              {Number(item?.preco || 0).toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' })}
                             </td>
 
                             {/* Subtotal */}
