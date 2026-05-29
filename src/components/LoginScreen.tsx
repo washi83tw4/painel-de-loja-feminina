@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { Lock, Mail, ShoppingBag, Eye, EyeOff, AlertCircle } from 'lucide-react';
+import { Lock, Mail, Sparkles, Eye, EyeOff, AlertCircle } from 'lucide-react';
 import { AdminUser, SupabaseConfig } from '../types';
 import { getSupabaseClient } from '../supabaseClient';
 
@@ -59,22 +59,24 @@ export default function LoginScreen({ onLoginSuccess, supabaseConfig }: LoginScr
   return (
     <div id="login-container" className="min-h-screen flex bg-slate-50 font-sans">
       {/* Editorial/High-fashion Photo Left Panel */}
-      <div className="hidden lg:flex lg:w-1/2 relative bg-slate-950 items-center justify-center p-12 overflow-hidden">
-        <div className="absolute inset-0 opacity-60 bg-cover bg-center transition-transform hover:scale-105 duration-1000" style={{ backgroundImage: "url('https://images.unsplash.com/photo-1441986300917-64674bd600d8?w=1000&auto=format&fit=crop&q=80')" }}></div>
-        <div className="absolute inset-0 bg-gradient-to-t from-slate-950/90 via-slate-950/40 to-transparent"></div>
+      <div className="hidden lg:flex lg:w-1/2 relative bg-slate-900 items-center justify-center p-12 overflow-hidden">
+        <div className="absolute inset-0 opacity-90 bg-cover bg-center transition-transform hover:scale-105 duration-1000" style={{ backgroundImage: "url('https://images.unsplash.com/photo-1441986300917-64674bd600d8?w=1000&auto=format&fit=crop&q=80')" }}></div>
+        {/* Soft, very light overlay to let the beautiful fashion photo shine through brightly while keeping text legible */}
+        <div className="absolute inset-0 bg-black/10 animate-fade-in"></div>
+        <div className="absolute inset-0 bg-gradient-to-t from-black/40 via-transparent to-transparent"></div>
         <div className="relative z-10 max-w-md text-white text-center">
           <div className="inline-flex items-center gap-2 px-3 py-1.5 rounded-full bg-white/15 backdrop-blur-md mb-6 border border-white/20">
-            <ShoppingBag id="title-icon" className="w-4 h-4 text-pink-300" />
-            <span className="text-xs uppercase tracking-widest font-mono font-medium">ClosetAdmin Boutique</span>
+            <Sparkles id="title-icon" className="w-4 h-4 text-pink-300" />
+            <span className="text-xs uppercase tracking-widest font-mono font-medium">Maison Atelier Moda</span>
           </div>
           <h1 className="text-4xl font-extrabold tracking-tight mb-4 drop-shadow-sm font-sans text-white">
-            ClosetAdmin Hub
+            Maison Atelier
           </h1>
           <p className="text-slate-200 text-sm leading-relaxed mb-6 font-normal">
-            A plataforma administrativa para controle impecável de produtos, estoque em tempo real e análise de faturamento integrado ao banco do Supabase.
+            A plataforma de administração de alta costura para controle impecável de produtos, estoque inteligente em tempo real e análise de faturamento integrado ao Supabase.
           </p>
           <div className="text-xs text-slate-400 font-mono mt-12">
-            CONCEITO MODERNO DE GESTÃO &bull; 2026
+            CONCEITO EXCLUSIVO DE GESTÃO &bull; 2026
           </div>
         </div>
       </div>
@@ -86,10 +88,10 @@ export default function LoginScreen({ onLoginSuccess, supabaseConfig }: LoginScr
           {/* Logo & Header */}
           <div className="text-center mb-8">
             <div className="inline-flex items-center justify-center w-12 h-12 rounded-xl bg-pink-600 text-white mb-4 shadow-sm">
-              <ShoppingBag className="w-6 h-6" />
+              <Sparkles className="w-6 h-6" />
             </div>
-            <h2 className="text-2xl font-bold text-slate-950 tracking-tight">ClosetAdmin Boutique</h2>
-            <p className="text-sm text-slate-500 mt-1.5">Acesso administrativo de controle de faturamento e estoque</p>
+            <h2 className="text-2xl font-bold text-slate-950 tracking-tight">Maison Atelier</h2>
+            <p className="text-sm text-slate-500 mt-1.5">Acesso administrativo de controle de faturamento e estoque premium</p>
           </div>
 
           {/* Database Info Banner */}

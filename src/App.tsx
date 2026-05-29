@@ -1,6 +1,7 @@
 import { useState, useEffect } from 'react';
 import { 
   ShoppingBag, 
+  Sparkles,
   LogOut, 
   Plus, 
   Database, 
@@ -279,14 +280,14 @@ export default function App() {
           {/* Logo Brand Name */}
           <div className="flex items-center gap-2.5">
             <div className="w-9 h-9 bg-pink-600 text-white rounded-xl flex items-center justify-center font-bold shadow-sm">
-              <ShoppingBag className="w-5 h-5 text-white" />
+              <Sparkles className="w-5 h-5 text-white" />
             </div>
             <div>
               <span className="text-sm font-black uppercase tracking-widest block font-sans">
-                ClosetAdmin
+                Maison Atelier
               </span>
               <span className="text-[10px] text-pink-400 block font-mono">
-                BOUTIQUE FEMININA GESTÃO
+                HAUTE COUTURE GESTÃO
               </span>
             </div>
             

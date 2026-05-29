@@ -831,7 +831,7 @@ export default function ProductForm({ isOpen, onClose, onSubmit, initialProduct 
 
                     {/* Banner Color Picker & custom Background */}
                     <div className="space-y-1.5">
-                      <label className="block text-[10px] font-bold text-slate-500 uppercase tracking-wider">Cor de Fundo (Padrão ou Customizada)</label>
+                      <label className="block text-[10px] font-bold text-slate-500 uppercase tracking-wider">Cor de Fundo ou Gradiente do Banner</label>
                       <div className="flex gap-2 items-center">
                         <input
                           type="color"
@@ -843,32 +843,104 @@ export default function ProductForm({ isOpen, onClose, onSubmit, initialProduct 
                           type="text"
                           value={bannerBg}
                           onChange={(e) => setBannerBg(e.target.value)}
-                          placeholder="Ex: #fdf2f8 ou gradiente"
+                          placeholder="Ex: #fdf2f8 ou linear-gradient(...)"
                           className="block w-full px-2 py-1.5 border border-slate-200 rounded-lg text-xs font-semibold focus:outline-none focus:ring-2 focus:ring-sky-500 text-slate-800 bg-white"
                         />
                       </div>
 
-                      {/* Cool palette suggests */}
-                      <div className="space-y-1 pt-0.5">
-                        <span className="text-[8px] font-bold text-slate-400 uppercase tracking-widest block">Sugestões de fundos elegantes:</span>
-                        <div className="flex flex-wrap gap-1">
-                          {[
-                            { label: 'Rosa Soft', value: '#fdf2f8' },
-                            { label: 'Cereja', value: '#fff1f2' },
-                            { label: 'Bruto Escuro', value: '#111827' },
-                            { label: 'Algodão', value: '#fafaf9' },
-                            { label: 'Violeta Lilá', value: '#f5f3ff' },
-                          ].map((preset) => (
-                            <button
-                              key={preset.value}
-                              type="button"
-                              onClick={() => setBannerBg(preset.value)}
-                              className={`px-1.5 py-0.5 text-[8px] font-bold rounded border transition cursor-pointer flex items-center gap-0.5 ${bannerBg === preset.value ? 'border-sky-500 bg-sky-50 text-sky-700' : 'border-slate-150 bg-slate-50 hover:bg-slate-100 text-slate-500'}`}
-                            >
-                              <span className="w-1.5 h-1.5 rounded-full border border-slate-200" style={{ backgroundColor: preset.value }}></span>
-                              {preset.label}
-                            </button>
-                          ))}
+                      {/* Cool palette suggests with both gradients and solid colors */}
+                      <div className="space-y-2 pt-0.5">
+                        <div>
+                          <span className="text-[8px] font-bold text-slate-400 uppercase tracking-widest block mb-1">Gradientes de Luxo:</span>
+                          <div className="flex flex-wrap gap-1">
+                            {[
+                              { label: 'Rosé Imperial', value: 'linear-gradient(135deg, #fdf2f8 0%, #fff1f2 50%, #fef3c7 100%)' },
+                              { label: 'Lilás Atelier', value: 'linear-gradient(135deg, #f5f3ff 0%, #fae8ff 50%, #fdf2f8 100%)' },
+                              { label: 'Seda Celeste', value: 'linear-gradient(135deg, #f0f9ff 0%, #e0f2fe 50%, #fdf2f8 100%)' },
+                              { label: 'Champagne', value: 'linear-gradient(135deg, #fafaf9 0%, #f5f5f4 55%, #ffe4e6 100%)' },
+                              { label: 'Midnight Velvet', value: 'linear-gradient(135deg, #111827 0%, #1e1b4b 50%, #311042 100%)' },
+                            ].map((preset) => (
+                              <button
+                                key={preset.value}
+                                type="button"
+                                onClick={() => setBannerBg(preset.value)}
+                                className={`px-1.5 py-0.5 text-[8px] font-bold rounded border transition cursor-pointer flex items-center gap-1 ${bannerBg === preset.value ? 'border-sky-500 bg-sky-50 text-sky-700' : 'border-slate-150 bg-slate-50 hover:bg-slate-100 text-slate-500'}`}
+                              >
+                                <span className="w-2.5 h-2.5 rounded-full border border-slate-200/50 flex-shrink-0" style={{ background: preset.value }}></span>
+                                {preset.label}
+                              </button>
+                            ))}
+                          </div>
+                        </div>
+
+                        <div>
+                          <span className="text-[8px] font-bold text-slate-400 uppercase tracking-widest block mb-1">Cores Sólidas Premium:</span>
+                          <div className="flex flex-wrap gap-1">
+                            {[
+                              { label: 'Preto Silk', value: '#111827' },
+                              { label: 'Rosa Soft', value: '#fdf2f8' },
+                              { label: 'Cereja', value: '#fff1f2' },
+                              { label: 'Violeta Lilá', value: '#f5f3ff' },
+                              { label: 'Algodão', value: '#fafaf9' },
+                            ].map((preset) => (
+                              <button
+                                key={preset.value}
+                                type="button"
+                                onClick={() => setBannerBg(preset.value)}
+                                className={`px-1.5 py-0.5 text-[8px] font-bold rounded border transition cursor-pointer flex items-center gap-1 ${bannerBg === preset.value ? 'border-sky-500 bg-sky-50 text-sky-700' : 'border-slate-150 bg-slate-50 hover:bg-slate-100 text-slate-500'}`}
+                              >
+                                <span className="w-2.5 h-2.5 rounded-full border border-slate-200 flex-shrink-0" style={{ backgroundColor: preset.value }}></span>
+                                {preset.label}
+                              </button>
+                            ))}
+                          </div>
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+
+                  {/* Real-time Banner Live Preview Box */}
+                  <div className="col-span-1 pt-1.5 border-t border-slate-100">
+                    <span className="block text-[9px] font-bold text-slate-400 uppercase tracking-wider mb-2">Visualização Prévia do Banner (Tempo Real)</span>
+                    <div 
+                      className="relative rounded-xl p-4 overflow-hidden min-h-[105px] flex flex-col justify-center border border-slate-200 transition-all duration-300"
+                      style={{ 
+                        background: bannerBg || '#fdf2f8',
+                        color: (bannerBg.toLowerCase() === '#111827' || bannerBg.includes('111827') || bannerBg.includes('#1e1b4b')) ? '#ffffff' : '#0f172a'
+                      }}
+                    >
+                      {/* Interactive custom banner optional background decorative image representation */}
+                      {bannerImage && (
+                        <div 
+                          className="absolute inset-0 bg-cover bg-center mix-blend-overlay opacity-30 transition-all duration-300"
+                          style={{ backgroundImage: `url(${bannerImage})` }}
+                        />
+                      )}
+                      
+                      {/* Soft protective drop overlay for text readability without darkening too much */}
+                      <div className="absolute inset-0 bg-black/[0.02] pointer-events-none"></div>
+
+                      <div className="relative z-10 space-y-1">
+                        <div className="flex items-center gap-1.5">
+                          <span className="inline-block px-1.5 py-0.5 bg-pink-600 text-white text-[8px] font-black uppercase tracking-wider rounded-md">
+                            {categoria || PRESET_CATEGORIES[0]} &bull; Destaque
+                          </span>
+                        </div>
+                        <h3 className="text-sm font-black tracking-tight leading-tight uppercase font-sans">
+                          {nome || 'Nome do Produto Exemplo'}
+                        </h3>
+                        <p className="text-[10px] opacity-80 line-clamp-1 max-w-[85%] font-medium">
+                          {descricao || 'Insira uma descrição elegante do seu produto de alta costura...'}
+                        </p>
+                        <div className="flex items-center gap-1.5 pt-1">
+                          <span className="text-xs font-black">
+                            R$ {emPromocao && precoPromocional ? Number(precoPromocional).toFixed(2) : Number(preco || 0).toFixed(2)}
+                          </span>
+                          {emPromocao && precoPromocional && (
+                            <span className="text-[9px] line-through opacity-60">
+                              R$ {Number(preco || 0).toFixed(2)}
+                            </span>
+                          )}
                         </div>
                       </div>
                     </div>

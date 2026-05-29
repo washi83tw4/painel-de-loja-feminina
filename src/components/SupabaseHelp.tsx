@@ -28,9 +28,16 @@ create table if not exists produtos (
   categoria text not null,
   tamanho text not null, -- PP, P, M, G, etc (ex: "P, M, G")
   descricao text,
-  imagem text,
+  imagem text, -- URL da imagem do produto
   estoque integer not null default 0, -- Estoque total somado
-  tamanhos_estoque jsonb not null default '{}'::jsonb -- Grade de estoques específicos (ex: {"P": 5, "M": 0, "G": 10})
+  tamanhos_estoque jsonb not null default '{}'::jsonb, -- Grade de estoques específicos (ex: {"P": 5, "M": 0, "G": 10})
+  em_promocao boolean not null default false,
+  preco_promocional numeric,
+  destaque boolean not null default false,
+  banner boolean not null default false,
+  ativo boolean not null default true,
+  banner_image text, -- URL da imagem de fundo do banner (bucket banners)
+  banner_bg text -- Cor ou gradiente de fundo do banner (ex: "#fdf2f8")
 );
 
 alter table produtos enable row level security;

@@ -305,15 +305,22 @@ export async function getProductsList(): Promise<{ data: Product[]; usingFallbac
   }
 
   try {
+    console.log("Supabase URL:", keys.url);
+    console.log("Buscando tabela produtos...");
+
     const { data, error } = await client
       .from('produtos')
       .select('*')
       .order('id', { ascending: false });
 
-    if (error) throw error;
+    if (error) {
+      console.log("Erro completo:", error);
+      throw error;
+    }
     return { data: (data || []) as Product[], usingFallback: false, error: null };
   } catch (err: any) {
     console.error('Erro ao buscar produtos do Supabase:', err);
+    console.log("Erro completo:", err);
     // Auto fallback to local storage on error
     const stored = localStorage.getItem(PRODUCTS_LOCAL_STORAGE_KEY);
     const data = stored ? JSON.parse(stored) : [];

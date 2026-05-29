@@ -294,7 +294,7 @@ export default function ProductTable({ products, onEditClick, onDeleteClick, onA
                           <span className="px-1.5 py-0.5 bg-sky-50 border border-sky-100 text-sky-700 text-[8px] font-black rounded uppercase flex items-center gap-1">
                             🖥️ Banner
                             {p.banner_bg && (
-                              <span className="w-1.5 h-1.5 rounded-full border border-slate-300" style={{ backgroundColor: p.banner_bg }}></span>
+                              <span className="w-1.5 h-1.5 rounded-full border border-slate-300" style={{ background: p.banner_bg }}></span>
                             )}
                           </span>
                         )}
@@ -396,7 +396,7 @@ export default function ProductTable({ products, onEditClick, onDeleteClick, onA
                                   <span className="inline-flex items-center gap-1 px-1.5 py-0.2 bg-sky-50 border border-sky-100 text-sky-750 text-[9px] font-black rounded tracking-wide uppercase">
                                     🖥️ Banner
                                     {p.banner_bg && (
-                                      <span className="w-2 h-2 rounded-full border border-slate-300" style={{ backgroundColor: p.banner_bg }} title={`Fundo: ${p.banner_bg}`}></span>
+                                      <span className="w-2 h-2 rounded-full border border-slate-300" style={{ background: p.banner_bg }} title={`Fundo: ${p.banner_bg}`}></span>
                                     )}
                                     {p.banner_image && (
                                       <span className="text-[10px]" title="Possui imagem de banner">🖼️</span>
