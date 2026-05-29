@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
-import { X, Image, Tag, DollarSign, Layers, Compass, Type, Save } from 'lucide-react';
+import { X, Image, Tag, DollarSign, Layers, Compass, Type, Save, Upload, Palette } from 'lucide-react';
 import { Product } from '../types';
+import { uploadProductFile } from '../supabaseClient';
 
 interface ProductFormProps {
   isOpen: boolean;
@@ -101,9 +102,16 @@ export default function ProductForm({ isOpen, onClose, onSubmit, initialProduct 
   const [destaque, setDestaque] = useState(false);
   const [banner, setBanner] = useState(false);
   const [ativo, setAtivo] = useState(true);
+  const [bannerImage, setBannerImage] = useState('');
+  const [bannerBg, setBannerBg] = useState('#fdf2f8');
+
+  // File Upload Status States
+  const [isUploadingImage, setIsUploadingImage] = useState(false);
+  const [isUploadingBanner, setIsUploadingBanner] = useState(false);
 
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [uploadError, setUploadError] = useState<string | null>(null);
 
   // Sync state if editing
   useEffect(() => {
@@ -120,6 +128,8 @@ export default function ProductForm({ isOpen, onClose, onSubmit, initialProduct 
       setDestaque(!!initialProduct.destaque);
       setBanner(!!initialProduct.banner);
       setAtivo(initialProduct.ativo !== undefined ? !!initialProduct.ativo : true);
+      setBannerImage(initialProduct.banner_image || '');
+      setBannerBg(initialProduct.banner_bg || '#fdf2f8');
 
       if (initialProduct.tamanhos_estoque && Object.keys(initialProduct.tamanhos_estoque).length > 0) {
         setSizeStocks({ ...initialProduct.tamanhos_estoque });
@@ -153,6 +163,8 @@ export default function ProductForm({ isOpen, onClose, onSubmit, initialProduct 
       setDestaque(false);
       setBanner(false);
       setAtivo(true);
+      setBannerImage('');
+      setBannerBg('#fdf2f8');
     }
     setCustomSizeInput('');
     setError(null);
@@ -198,6 +210,52 @@ export default function ProductForm({ isOpen, onClose, onSubmit, initialProduct 
       ...prev,
       [size]: Math.max(0, value)
     }));
+  };
+
+  const handleProductImageUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const files = e.target.files;
+    if (!files || files.length === 0) return;
+    const file = files[0];
+    
+    setIsUploadingImage(true);
+    setError(null);
+    setUploadError(null);
+    try {
+      const { publicUrl, error: uploadErr } = await uploadProductFile(file, 'produtos');
+      if (uploadErr) {
+        setUploadError(uploadErr);
+      }
+      if (publicUrl) {
+        setImagem(publicUrl);
+      }
+    } catch (err: any) {
+      setError(err?.message || 'Erro inesperado ao enviar arquivo.');
+    } finally {
+      setIsUploadingImage(false);
+    }
+  };
+
+  const handleBannerImageUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const files = e.target.files;
+    if (!files || files.length === 0) return;
+    const file = files[0];
+    
+    setIsUploadingBanner(true);
+    setError(null);
+    setUploadError(null);
+    try {
+      const { publicUrl, error: uploadErr } = await uploadProductFile(file, 'banners');
+      if (uploadErr) {
+        setUploadError(uploadErr);
+      }
+      if (publicUrl) {
+        setBannerImage(publicUrl);
+      }
+    } catch (err: any) {
+      setError(err?.message || 'Erro inesperado ao enviar arquivo de banner.');
+    } finally {
+      setIsUploadingBanner(false);
+    }
   };
 
   const handleFormSubmit = async (e: React.FormEvent) => {
@@ -258,7 +316,9 @@ export default function ProductForm({ isOpen, onClose, onSubmit, initialProduct 
         em_promocao: emPromocao,
         destaque: destaque,
         banner: banner,
-        ativo: ativo
+        ativo: ativo,
+        banner_image: banner ? (bannerImage.trim() || null) : null,
+        banner_bg: banner ? (bannerBg.trim() || null) : null
       });
       onClose();
     } catch (err: any) {
@@ -486,22 +546,79 @@ export default function ProductForm({ isOpen, onClose, onSubmit, initialProduct 
               )}
             </div>
 
-            {/* URL da Imagem */}
-            <div className="md:col-span-2">
-              <label className="block text-xs font-semibold text-slate-700 uppercase tracking-wider mb-1.5">
-                URL da Imagem do Produto
+            {/* Imagem do Produto com Opção de Upload */}
+            <div className="md:col-span-2 space-y-2">
+              <label className="block text-xs font-semibold text-slate-700 uppercase tracking-wider">
+                Imagem do Produto * (Envie do computador ou use URL)
               </label>
-              <div className="relative">
-                <span className="absolute inset-y-0 left-0 pl-3 flex items-center text-slate-400">
-                  <Image className="w-4 h-4" />
-                </span>
-                <input
-                  type="url"
-                  value={imagem}
-                  onChange={(e) => setImagem(e.target.value)}
-                  placeholder="https://exemplo.com/foto-do-vestido.jpg"
-                  className="block w-full pl-9 pr-3 py-2 border border-slate-200 rounded-xl text-slate-900 text-sm focus:outline-none focus:ring-2 focus:ring-pink-500"
-                />
+              
+              {uploadError && (
+                <div className="p-2.5 bg-amber-50 border border-amber-200 text-amber-800 text-xs rounded-xl flex items-start gap-2">
+                  <span className="font-bold shrink-0">⚠️ Nota de Upload:</span>
+                  <p className="leading-relaxed">{uploadError}</p>
+                </div>
+              )}
+
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 items-start">
+                {/* Upload from Computer Container */}
+                <div className="border border-dashed border-slate-250 hover:border-pink-500 bg-slate-50/50 hover:bg-pink-50/5 p-4 rounded-xl text-center space-y-1.5 relative transition duration-250 min-h-[100px] flex flex-col justify-center items-center cursor-pointer">
+                  <input
+                    type="file"
+                    accept="image/*"
+                    onChange={handleProductImageUpload}
+                    className="absolute inset-0 opacity-0 cursor-pointer w-full h-full"
+                    disabled={isUploadingImage}
+                  />
+                  {isUploadingImage ? (
+                    <div className="w-6 h-6 border-2 border-pink-500 border-t-transparent rounded-full animate-spin"></div>
+                  ) : (
+                    <div className="flex flex-col items-center justify-center gap-1">
+                      <Upload className="w-5 h-5 text-slate-400" />
+                      <span className="text-xs font-semibold text-slate-700">Enviar Foto do PC</span>
+                      <span className="text-[10px] text-slate-400">Arraste ou clique para selecionar</span>
+                    </div>
+                  )}
+                </div>
+
+                {/* Direct Image URL input */}
+                <div className="space-y-3">
+                  <div className="relative">
+                    <span className="absolute inset-y-0 left-0 pl-3 flex items-center text-slate-400 pointer-events-none">
+                      <Image className="w-4 h-4" />
+                    </span>
+                    <input
+                      type="url"
+                      value={imagem}
+                      onChange={(e) => setImagem(e.target.value)}
+                      placeholder="Ou cole a URL da imagem aqui..."
+                      className="block w-full pl-9 pr-3 py-2 border border-slate-200 rounded-xl text-slate-900 text-sm focus:outline-none focus:ring-2 focus:ring-pink-500"
+                    />
+                  </div>
+
+                  {imagem && (
+                    <div className="flex items-center gap-3 bg-slate-50 p-2 rounded-xl border border-slate-150 relative">
+                      <img
+                        src={imagem}
+                        alt="Preview"
+                        onError={(e) => { (e.target as HTMLImageElement).src = 'https://images.unsplash.com/photo-1540221129048-8e178929e52b?w=600&auto=format&fit=crop&q=80'; }}
+                        className="w-10 h-10 rounded-lg object-cover border border-slate-200 bg-white"
+                        referrerPolicy="no-referrer"
+                      />
+                      <div className="min-w-0 flex-1">
+                        <span className="text-[10px] font-bold text-slate-400 uppercase block leading-none">Preview</span>
+                        <span className="text-xs text-slate-600 truncate block mt-1">{imagem}</span>
+                      </div>
+                      <button
+                        type="button"
+                        onClick={() => setImagem('')}
+                        className="text-slate-400 hover:text-red-500 p-1 cursor-pointer"
+                        title="Remover imagem"
+                      >
+                        <X className="w-4 h-4" />
+                      </button>
+                    </div>
+                  )}
+                </div>
               </div>
 
               {/* Aesthetic Images Presets List - Incremental value-add for beautiful store generation */}
@@ -640,6 +757,122 @@ export default function ProductForm({ isOpen, onClose, onSubmit, initialProduct 
                   <span className="text-[10px] text-slate-400 block font-medium">
                     Preço original de venda: <strong>R$ {preco || '0.00'}</strong>. Insira um valor menor.
                   </span>
+                </div>
+              )}
+
+              {/* Banner custom options */}
+              {banner && (
+                <div id="banner-custom-panel" className="p-3 bg-white border border-sky-100 rounded-xl space-y-3.5 animate-fade-in mt-3">
+                  <div className="flex items-center gap-1.5 border-b border-slate-100 pb-1.5">
+                    <Palette className="w-4 h-4 text-sky-500" />
+                    <span className="text-[11px] font-bold text-sky-850 uppercase tracking-wider">Configuração do Banner Promocional</span>
+                  </div>
+
+                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-3.5">
+                    {/* Banner Image file & input */}
+                    <div className="space-y-1.5">
+                      <label className="block text-[10px] font-bold text-slate-500 uppercase tracking-wider">Imagem de Fundo do Banner</label>
+                      
+                      <div className="border border-dashed border-slate-200 hover:border-sky-400 bg-slate-50/40 p-3 rounded-lg text-center space-y-1 relative cursor-pointer flex flex-col items-center justify-center min-h-[75px]">
+                        <input
+                          type="file"
+                          accept="image/*"
+                          onChange={handleBannerImageUpload}
+                          className="absolute inset-0 opacity-0 cursor-pointer w-full h-full"
+                          disabled={isUploadingBanner}
+                        />
+                        {isUploadingBanner ? (
+                          <div className="w-5 h-5 border-2 border-sky-500 border-t-transparent rounded-full animate-spin"></div>
+                        ) : (
+                          <>
+                            <Upload className="w-4 h-4 text-slate-400" />
+                            <span className="text-[10px] font-bold text-slate-700">Enviar Arte/Banner</span>
+                            <span className="text-[8px] text-slate-400">Clique ou arraste a imagem de banner</span>
+                          </>
+                        )}
+                      </div>
+
+                      <div className="relative">
+                        <span className="absolute inset-y-0 left-0 pl-2.5 flex items-center text-slate-400 pointer-events-none">
+                          <Image className="w-3.5 h-3.5" />
+                        </span>
+                        <input
+                          type="url"
+                          value={bannerImage}
+                          onChange={(e) => setBannerImage(e.target.value)}
+                          placeholder="Ou insira link da imagem de banner..."
+                          className="block w-full pl-8 pr-2 py-1 border border-slate-200 rounded-lg text-xs focus:ring-2 focus:ring-sky-500 text-slate-800 focus:outline-none placeholder-slate-400 bg-white"
+                        />
+                      </div>
+
+                      {bannerImage && (
+                        <div className="flex items-center gap-2 bg-slate-50 p-1.5 rounded-lg border border-slate-150 relative truncate">
+                          <img
+                            src={bannerImage}
+                            alt="Preview do Banner"
+                            onError={(e) => { (e.target as HTMLImageElement).src = 'https://images.unsplash.com/photo-1441986300917-64674bd600d8?w=1000&auto=format&fit=crop&q=80'; }}
+                            className="w-10 h-7 rounded object-cover border border-slate-200 bg-white shrink-0"
+                            referrerPolicy="no-referrer"
+                          />
+                          <div className="min-w-0 flex-1 text-[10px] text-slate-500">
+                            <span className="block text-[8px] font-semibold uppercase text-slate-400 leading-none">Arte do Banner</span>
+                            <span className="block truncate mt-1 text-[9px] leading-tight">{bannerImage}</span>
+                          </div>
+                          <button
+                            type="button"
+                            onClick={() => setBannerImage('')}
+                            className="text-slate-400 hover:text-red-500 p-1 shrink-0 cursor-pointer"
+                          >
+                            <X className="w-3.5 h-3.5" />
+                          </button>
+                        </div>
+                      )}
+                    </div>
+
+                    {/* Banner Color Picker & custom Background */}
+                    <div className="space-y-1.5">
+                      <label className="block text-[10px] font-bold text-slate-500 uppercase tracking-wider">Cor de Fundo (Padrão ou Customizada)</label>
+                      <div className="flex gap-2 items-center">
+                        <input
+                          type="color"
+                          value={bannerBg.startsWith('#') ? bannerBg : '#fdf2f8'}
+                          onChange={(e) => setBannerBg(e.target.value)}
+                          className="w-8 h-8 rounded-md cursor-pointer border border-slate-200 flex-shrink-0 bg-transparent p-0"
+                        />
+                        <input
+                          type="text"
+                          value={bannerBg}
+                          onChange={(e) => setBannerBg(e.target.value)}
+                          placeholder="Ex: #fdf2f8 ou gradiente"
+                          className="block w-full px-2 py-1.5 border border-slate-200 rounded-lg text-xs font-semibold focus:outline-none focus:ring-2 focus:ring-sky-500 text-slate-800 bg-white"
+                        />
+                      </div>
+
+                      {/* Cool palette suggests */}
+                      <div className="space-y-1 pt-0.5">
+                        <span className="text-[8px] font-bold text-slate-400 uppercase tracking-widest block">Sugestões de fundos elegantes:</span>
+                        <div className="flex flex-wrap gap-1">
+                          {[
+                            { label: 'Rosa Soft', value: '#fdf2f8' },
+                            { label: 'Cereja', value: '#fff1f2' },
+                            { label: 'Bruto Escuro', value: '#111827' },
+                            { label: 'Algodão', value: '#fafaf9' },
+                            { label: 'Violeta Lilá', value: '#f5f3ff' },
+                          ].map((preset) => (
+                            <button
+                              key={preset.value}
+                              type="button"
+                              onClick={() => setBannerBg(preset.value)}
+                              className={`px-1.5 py-0.5 text-[8px] font-bold rounded border transition cursor-pointer flex items-center gap-0.5 ${bannerBg === preset.value ? 'border-sky-500 bg-sky-50 text-sky-700' : 'border-slate-150 bg-slate-50 hover:bg-slate-100 text-slate-500'}`}
+                            >
+                              <span className="w-1.5 h-1.5 rounded-full border border-slate-200" style={{ backgroundColor: preset.value }}></span>
+                              {preset.label}
+                            </button>
+                          ))}
+                        </div>
+                      </div>
+                    </div>
+                  </div>
                 </div>
               )}
             </div>

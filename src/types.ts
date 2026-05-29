@@ -14,6 +14,8 @@ export interface Product {
   destaque?: boolean;
   banner?: boolean;
   ativo?: boolean;
+  banner_image?: string;
+  banner_bg?: string;
 }
 
 export interface OrderItem {

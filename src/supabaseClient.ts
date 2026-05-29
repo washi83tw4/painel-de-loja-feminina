@@ -366,7 +366,9 @@ export async function createProductItem(productData: Omit<Product, 'id' | 'creat
           em_promocao: productData.em_promocao !== undefined ? !!productData.em_promocao : false,
           destaque: productData.destaque !== undefined ? !!productData.destaque : false,
           banner: productData.banner !== undefined ? !!productData.banner : false,
-          ativo: productData.ativo !== undefined ? !!productData.ativo : true
+          ativo: productData.ativo !== undefined ? !!productData.ativo : true,
+          banner_image: productData.banner_image || null,
+          banner_bg: productData.banner_bg || null
         }
       ])
       .select();
@@ -429,7 +431,9 @@ export async function updateProductItem(id: string, productData: Omit<Product, '
         em_promocao: productData.em_promocao !== undefined ? !!productData.em_promocao : false,
         destaque: productData.destaque !== undefined ? !!productData.destaque : false,
         banner: productData.banner !== undefined ? !!productData.banner : false,
-        ativo: productData.ativo !== undefined ? !!productData.ativo : true
+        ativo: productData.ativo !== undefined ? !!productData.ativo : true,
+        banner_image: productData.banner_image || null,
+        banner_bg: productData.banner_bg || null
       })
       .eq('id', queryId)
       .select();
@@ -556,5 +560,70 @@ export async function updateOrderStatus(id: string, status: Order['status']): Pr
       data: updatedOrder,
       error: `Atualizado localmente. Erro no Supabase: ${err.message || err}`
     };
+  }
+}
+
+// FILE UPLOAD FUNCTIONS FOR PRODUCTS AND BANNERS STORAGE BUCKETS
+export async function uploadProductFile(file: File, bucketName: string): Promise<{ publicUrl: string | null; error: string | null }> {
+  const client = getSupabaseClient();
+  const keys = getSupabaseKeys();
+
+  if (!keys.isConfigured || !client) {
+    // If Supabase is offline/not configured, convert to Base64 to save in local state
+    try {
+      const base64 = await new Promise<string>((resolve, reject) => {
+        const reader = new FileReader();
+        reader.readAsDataURL(file);
+        reader.onload = () => resolve(reader.result as string);
+        reader.onerror = error => reject(error);
+      });
+      return { publicUrl: base64, error: null };
+    } catch (e: any) {
+      return { publicUrl: null, error: `Falha ao converter arquivo localmente: ${e.message || e}` };
+    }
+  }
+
+  try {
+    const fileExt = file.name.split('.').pop();
+    const cleanFileName = file.name.replace(/[^A-Za-z0-9]/g, '_').substring(0, 15);
+    const fileName = `${Date.now()}-${cleanFileName}-${Math.random().toString(36).substring(2, 7)}.${fileExt}`;
+    const filePath = fileName;
+
+    const { error: uploadError } = await client.storage
+      .from(bucketName)
+      .upload(filePath, file, {
+        cacheControl: '3600',
+        upsert: true
+      });
+
+    if (uploadError) {
+      throw uploadError;
+    }
+
+    const { data } = client.storage.from(bucketName).getPublicUrl(filePath);
+
+    if (!data || !data.publicUrl) {
+      throw new Error(`Não foi possível obter a URL pública para o bucket ${bucketName}`);
+    }
+
+    return { publicUrl: data.publicUrl, error: null };
+  } catch (err: any) {
+    console.error(`Erro ao fazer upload para o bucket ${bucketName}:`, err);
+    
+    // As a super robust fallback so the user can continue, let's also try Base64!
+    try {
+      const base64 = await new Promise<string>((resolve, reject) => {
+        const reader = new FileReader();
+        reader.readAsDataURL(file);
+        reader.onload = () => resolve(reader.result as string);
+        reader.onerror = error => reject(error);
+      });
+      return { 
+        publicUrl: base64, 
+        error: `O bucket '${bucketName}' pode não existir ou não estar configurado como público (Storage -> buckets -> Criar ou editar bucket e marcar 'Public'). Usando fallback local temporário para a foto.` 
+      };
+    } catch (e) {
+      return { publicUrl: null, error: `Erro no upload do Supabase: ${err.message || err}` };
+    }
   }
 }
