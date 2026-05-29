@@ -9,6 +9,11 @@ export interface Product {
   imagem?: string;
   estoque: number;
   tamanhos_estoque?: Record<string, number>;
+  preco_promocional?: number;
+  em_promocao?: boolean;
+  destaque?: boolean;
+  banner?: boolean;
+  ativo?: boolean;
 }
 
 export interface OrderItem {

@@ -270,8 +270,30 @@ export default function ProductTable({ products, onEditClick, onDeleteClick, onA
                     <div className="space-y-1 min-w-0 flex-1">
                       <span className="text-[10px] font-bold text-slate-400 uppercase tracking-widest">{p.categoria}</span>
                       <h4 className="text-sm font-bold text-slate-900 truncate">{p.nome}</h4>
-                      <p className="text-xs text-pink-600 font-bold">R$ {p.preco.toFixed(2)}</p>
+                      
+                      {p.em_promocao && p.preco_promocional ? (
+                        <div className="flex items-center gap-1.5 flex-wrap">
+                          <span className="text-xs text-rose-600 font-bold">R$ {Number(p.preco_promocional).toFixed(2)}</span>
+                          <span className="text-[10px] text-slate-400 line-through font-medium">R$ {p.preco.toFixed(2)}</span>
+                          <span className="px-1.5 py-0.5 bg-rose-50 text-rose-750 border border-rose-100 text-[8px] font-black rounded uppercase">Promo</span>
+                        </div>
+                      ) : (
+                        <p className="text-xs text-pink-600 font-bold">R$ {p.preco.toFixed(2)}</p>
+                      )}
+
                       {renderSizeBadgesOnMobile(p)}
+
+                      <div className="flex gap-1.5 flex-wrap mt-1">
+                        {p.ativo === false && (
+                          <span className="px-1.5 py-0.5 bg-slate-100 border border-slate-200 text-slate-500 text-[8px] font-black rounded uppercase">Inativo</span>
+                        )}
+                        {p.destaque && (
+                          <span className="px-1.5 py-0.5 bg-amber-50 border border-amber-200 text-amber-700 text-[8px] font-black rounded uppercase">⭐ Destaque</span>
+                        )}
+                        {p.banner && (
+                          <span className="px-1.5 py-0.5 bg-sky-50 border border-sky-100 text-sky-700 text-[8px] font-black rounded uppercase">🖥️ Banner</span>
+                        )}
+                      </div>
                     </div>
                   </div>
 
@@ -355,17 +377,45 @@ export default function ProductTable({ products, onEditClick, onDeleteClick, onA
 
                         {/* Name & Desc */}
                         <td className="py-3.5 px-4 max-w-xs">
-                          <div className="font-bold text-slate-900 leading-snug">{p.nome}</div>
-                          {p.descricao && (
-                            <div className="text-xs text-slate-400 mt-0.5 line-clamp-1 italic font-normal">
-                              {p.descricao}
+                          <div className="flex flex-col gap-1">
+                            <div className="flex items-center gap-1.5 flex-wrap">
+                              <span className="font-bold text-slate-900 leading-snug">{p.nome}</span>
+                              <div className="flex gap-1">
+                                {p.ativo === false && (
+                                  <span className="inline-flex px-1.5 py-0.2 bg-slate-100 border border-slate-200 text-slate-500 text-[9px] font-black rounded tracking-wide uppercase">Inativo</span>
+                                )}
+                                {p.destaque && (
+                                  <span className="inline-flex px-1.5 py-0.2 bg-amber-50 border border-amber-200 text-amber-700 text-[9px] font-black rounded tracking-wide uppercase">⭐ Destaque</span>
+                                )}
+                                {p.banner && (
+                                  <span className="inline-flex px-1.5 py-0.2 bg-sky-50 border border-sky-100 text-sky-750 text-[9px] font-black rounded tracking-wide uppercase">🖥️ Banner</span>
+                                )}
+                              </div>
                             </div>
-                          )}
+                            {p.descricao && (
+                              <div className="text-xs text-slate-400 line-clamp-1 italic font-normal">
+                                {p.descricao}
+                              </div>
+                            )}
+                          </div>
                         </td>
 
                         {/* Price */}
-                        <td className="py-3.5 px-4 text-right font-bold text-slate-900 font-mono">
-                          R$ {p.preco.toLocaleString('pt-BR', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
+                        <td className="py-3.5 px-4 text-right font-mono">
+                          {p.em_promocao && p.preco_promocional ? (
+                            <div className="flex flex-col items-end">
+                              <span className="font-bold text-rose-600 block text-sm">
+                                R$ {Number(p.preco_promocional).toLocaleString('pt-BR', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
+                              </span>
+                              <span className="text-[10px] text-slate-400 line-through block font-medium">
+                                R$ {p.preco.toLocaleString('pt-BR', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
+                              </span>
+                            </div>
+                          ) : (
+                            <span className="font-bold text-slate-900 block text-sm">
+                              R$ {p.preco.toLocaleString('pt-BR', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
+                            </span>
+                          )}
                         </td>
 
                         {/* Category */}

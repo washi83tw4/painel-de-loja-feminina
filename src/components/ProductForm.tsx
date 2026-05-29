@@ -10,14 +10,17 @@ interface ProductFormProps {
 }
 
 const PRESET_CATEGORIES = [
-  'Camisas',
   'Camisetas',
+  'Blusas',
   'Calças',
+  'Shorts',
   'Vestidos',
   'Casacos',
   'Saias',
-  'Shorts',
-  'Acessórios'
+  'Bolsas',
+  'Acessórios',
+  'Sapatos',
+  'Promoções'
 ];
 
 const PRESET_SIZES = [
@@ -92,6 +95,13 @@ export default function ProductForm({ isOpen, onClose, onSubmit, initialProduct 
   const [sizeStocks, setSizeStocks] = useState<Record<string, number>>({ 'P': 5, 'M': 5, 'G': 5 });
   const [customSizeInput, setCustomSizeInput] = useState('');
   
+  // New shop variables states
+  const [emPromocao, setEmPromocao] = useState(false);
+  const [precoPromocional, setPrecoPromocional] = useState('');
+  const [destaque, setDestaque] = useState(false);
+  const [banner, setBanner] = useState(false);
+  const [ativo, setAtivo] = useState(true);
+
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
@@ -104,6 +114,13 @@ export default function ProductForm({ isOpen, onClose, onSubmit, initialProduct 
       setDescricao(initialProduct.descricao || '');
       setImagem(initialProduct.imagem || '');
       
+      // New fields sync
+      setEmPromocao(!!initialProduct.em_promocao);
+      setPrecoPromocional(initialProduct.preco_promocional !== undefined && initialProduct.preco_promocional !== null ? initialProduct.preco_promocional.toString() : '');
+      setDestaque(!!initialProduct.destaque);
+      setBanner(!!initialProduct.banner);
+      setAtivo(initialProduct.ativo !== undefined ? !!initialProduct.ativo : true);
+
       if (initialProduct.tamanhos_estoque && Object.keys(initialProduct.tamanhos_estoque).length > 0) {
         setSizeStocks({ ...initialProduct.tamanhos_estoque });
       } else {
@@ -129,6 +146,13 @@ export default function ProductForm({ isOpen, onClose, onSubmit, initialProduct 
       setDescricao('');
       setImagem('');
       setSizeStocks({ 'PP': 2, 'P': 5, 'M': 5, 'G': 5, 'GG': 2 });
+      
+      // Clear new fields
+      setEmPromocao(false);
+      setPrecoPromocional('');
+      setDestaque(false);
+      setBanner(false);
+      setAtivo(true);
     }
     setCustomSizeInput('');
     setError(null);
@@ -205,6 +229,21 @@ export default function ProductForm({ isOpen, onClose, onSubmit, initialProduct 
     const totalEstoque = (Object.values(sizeStocks) as number[]).reduce((acc, curr) => acc + curr, 0);
     const tamanhoString = Object.keys(sizeStocks).join(', ');
 
+    // Validate Promotional fields
+    const parsedPromoPrice = emPromocao ? parseFloat(precoPromocional) : undefined;
+    if (emPromocao) {
+      if (parsedPromoPrice === undefined || isNaN(parsedPromoPrice) || parsedPromoPrice <= 0) {
+        setError('Por favor, informe um preço promocional válido maior que zero.');
+        setIsSubmitting(false);
+        return;
+      }
+      if (parsedPromoPrice >= parsedPrice) {
+        setError('O preço promocional deve ser menor do que o preço original de venda.');
+        setIsSubmitting(false);
+        return;
+      }
+    }
+
     try {
       await onSubmit({
         nome: nome.trim(),
@@ -214,7 +253,12 @@ export default function ProductForm({ isOpen, onClose, onSubmit, initialProduct 
         descricao: descricao.trim(),
         imagem: imagem.trim() || 'https://images.unsplash.com/photo-1540221129048-8e178929e52b?w=600&auto=format&fit=crop&q=80', // stylish empty apparel fallback
         estoque: totalEstoque,
-        tamanhos_estoque: sizeStocks
+        tamanhos_estoque: sizeStocks,
+        preco_promocional: emPromocao ? parsedPromoPrice : null,
+        em_promocao: emPromocao,
+        destaque: destaque,
+        banner: banner,
+        ativo: ativo
       });
       onClose();
     } catch (err: any) {
@@ -501,6 +545,103 @@ export default function ProductForm({ isOpen, onClose, onSubmit, initialProduct 
                 placeholder="Explicite detalhes do tecido, caimento ou especificações da peça de vestuário."
                 className="block w-full px-3 py-2 border border-slate-200 rounded-xl text-slate-900 text-sm focus:outline-none focus:ring-2 focus:ring-pink-500 resize-none"
               ></textarea>
+            </div>
+
+            {/* Controle de Exibição e Promoção */}
+            <div className="md:col-span-2 border border-slate-100 bg-slate-50/40 p-4 rounded-xl space-y-4">
+              <h4 className="text-xs font-bold text-slate-800 uppercase tracking-widest flex items-center gap-1.5 border-b border-slate-150 pb-2">
+                <Compass className="w-4 h-4 text-pink-500" />
+                Controle de Exibição e Promoção
+              </h4>
+
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                {/* Ativo toggle */}
+                <div id="toggle-ativo" className="flex items-center justify-between p-2.5 bg-white rounded-xl border border-slate-150">
+                  <div className="space-y-0.5">
+                    <span className="text-xs font-bold text-slate-800 block">Produto Ativo</span>
+                    <span className="text-[10px] text-slate-500 block">Exibir no catálogo público</span>
+                  </div>
+                  <button
+                    type="button"
+                    onClick={() => setAtivo(!ativo)}
+                    className={`w-12 h-6 rounded-full p-0.5 transition-all cursor-pointer relative shrink-0 ${ativo ? 'bg-pink-600' : 'bg-slate-300'}`}
+                  >
+                    <span className={`block w-5 h-5 bg-white rounded-full transition-all duration-300 ${ativo ? 'translate-x-6' : 'translate-x-0'}`}></span>
+                  </button>
+                </div>
+
+                {/* Banner toggle */}
+                <div id="toggle-banner" className="flex items-center justify-between p-2.5 bg-white rounded-xl border border-slate-150">
+                  <div className="space-y-0.5">
+                    <span className="text-xs font-bold text-slate-800 block">Destaque em Banner</span>
+                    <span className="text-[10px] text-slate-500 block">Exibir no carrossel principal</span>
+                  </div>
+                  <button
+                    type="button"
+                    onClick={() => setBanner(!banner)}
+                    className={`w-12 h-6 rounded-full p-0.5 transition-all cursor-pointer relative shrink-0 ${banner ? 'bg-pink-600' : 'bg-slate-300'}`}
+                  >
+                    <span className={`block w-5 h-5 bg-white rounded-full transition-all duration-300 ${banner ? 'translate-x-6' : 'translate-x-0'}`}></span>
+                  </button>
+                </div>
+
+                {/* Destaque toggle */}
+                <div id="toggle-destaque" className="flex items-center justify-between p-2.5 bg-white rounded-xl border border-slate-150">
+                  <div className="space-y-0.5">
+                    <span className="text-xs font-bold text-slate-800 block">Seção Especiais / Novidades</span>
+                    <span className="text-[10px] text-slate-500 block">Colocar na vitrine de destaque</span>
+                  </div>
+                  <button
+                    type="button"
+                    onClick={() => setDestaque(!destaque)}
+                    className={`w-12 h-6 rounded-full p-0.5 transition-all cursor-pointer relative shrink-0 ${destaque ? 'bg-pink-600' : 'bg-slate-300'}`}
+                  >
+                    <span className={`block w-5 h-5 bg-white rounded-full transition-all duration-300 ${destaque ? 'translate-x-6' : 'translate-x-0'}`}></span>
+                  </button>
+                </div>
+
+                {/* Em Promoção toggle */}
+                <div id="toggle-em-promocao" className="flex items-center justify-between p-2.5 bg-white rounded-xl border border-slate-150">
+                  <div className="space-y-0.5">
+                    <span className="text-xs font-bold text-slate-800 block">Peça em Promoção</span>
+                    <span className="text-[10px] text-slate-500 block">Habilitar preço de desconto</span>
+                  </div>
+                  <button
+                    type="button"
+                    onClick={() => setEmPromocao(!emPromocao)}
+                    className={`w-12 h-6 rounded-full p-0.5 transition-all cursor-pointer relative shrink-0 ${emPromocao ? 'bg-pink-600' : 'bg-slate-300'}`}
+                  >
+                    <span className={`block w-5 h-5 bg-white rounded-full transition-all duration-300 ${emPromocao ? 'translate-x-6' : 'translate-x-0'}`}></span>
+                  </button>
+                </div>
+              </div>
+
+              {/* Preço Promocional sub-field */}
+              {emPromocao && (
+                <div id="promo-price-input" className="p-3 bg-white border border-rose-100 rounded-xl space-y-1.5 animate-fade-in">
+                  <label className="block text-[11px] font-bold text-rose-700 uppercase tracking-wider">
+                    Preço Promocional (R$) *
+                  </label>
+                  <div className="relative max-w-xs">
+                    <span className="absolute inset-y-0 left-0 pl-3 flex items-center text-rose-500 font-bold text-xs select-none">
+                      R$
+                    </span>
+                    <input
+                      type="number"
+                      step="0.01"
+                      required={emPromocao}
+                      min="0.01"
+                      value={precoPromocional}
+                      onChange={(e) => setPrecoPromocional(e.target.value)}
+                      placeholder="Preço promocional..."
+                      className="block w-full pl-9 pr-3 py-1.5 border border-rose-200 rounded-lg text-rose-950 text-sm focus:outline-none focus:ring-2 focus:ring-rose-500 bg-rose-50/10"
+                    />
+                  </div>
+                  <span className="text-[10px] text-slate-400 block font-medium">
+                    Preço original de venda: <strong>R$ {preco || '0.00'}</strong>. Insira um valor menor.
+                  </span>
+                </div>
+              )}
             </div>
           </div>
 

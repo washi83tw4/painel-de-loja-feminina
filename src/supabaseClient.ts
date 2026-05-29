@@ -361,7 +361,12 @@ export async function createProductItem(productData: Omit<Product, 'id' | 'creat
           descricao: productData.descricao,
           imagem: productData.imagem,
           estoque: Number(productData.estoque),
-          tamanhos_estoque: productData.tamanhos_estoque || {}
+          tamanhos_estoque: productData.tamanhos_estoque || {},
+          preco_promocional: productData.preco_promocional !== undefined && productData.preco_promocional !== null ? Number(productData.preco_promocional) : null,
+          em_promocao: productData.em_promocao !== undefined ? !!productData.em_promocao : false,
+          destaque: productData.destaque !== undefined ? !!productData.destaque : false,
+          banner: productData.banner !== undefined ? !!productData.banner : false,
+          ativo: productData.ativo !== undefined ? !!productData.ativo : true
         }
       ])
       .select();
@@ -419,7 +424,12 @@ export async function updateProductItem(id: string, productData: Omit<Product, '
         descricao: productData.descricao,
         imagem: productData.imagem,
         estoque: Number(productData.estoque),
-        tamanhos_estoque: productData.tamanhos_estoque || {}
+        tamanhos_estoque: productData.tamanhos_estoque || {},
+        preco_promocional: productData.preco_promocional !== undefined && productData.preco_promocional !== null ? Number(productData.preco_promocional) : null,
+        em_promocao: productData.em_promocao !== undefined ? !!productData.em_promocao : false,
+        destaque: productData.destaque !== undefined ? !!productData.destaque : false,
+        banner: productData.banner !== undefined ? !!productData.banner : false,
+        ativo: productData.ativo !== undefined ? !!productData.ativo : true
       })
       .eq('id', queryId)
       .select();
