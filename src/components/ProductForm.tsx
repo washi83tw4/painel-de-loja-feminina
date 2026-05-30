@@ -132,30 +132,47 @@ export default function ProductForm({ isOpen, onClose, onSubmit, initialProduct 
       setBannerBg(initialProduct.banner_bg || '#fdf2f8');
 
       if (initialProduct.tamanhos_estoque && Object.keys(initialProduct.tamanhos_estoque).length > 0) {
-        setSizeStocks({ ...initialProduct.tamanhos_estoque });
+        // Ensure PP, P, M, G, GG are always initialized as fields
+        const loadedStocks = { ...initialProduct.tamanhos_estoque };
+        ['PP', 'P', 'M', 'G', 'GG'].forEach(sz => {
+          if (loadedStocks[sz] === undefined) {
+            loadedStocks[sz] = 0;
+          } else {
+            loadedStocks[sz] = Math.max(0, Number(loadedStocks[sz]) || 0);
+          }
+        });
+        Object.keys(loadedStocks).forEach(sz => {
+          loadedStocks[sz] = Math.max(0, Number(loadedStocks[sz]) || 0);
+        });
+        setSizeStocks(loadedStocks);
       } else {
         // Legacy conversion
         const sizes = initialProduct.tamanho
           ? initialProduct.tamanho.split(',').map(s => s.trim()).filter(Boolean)
           : ['M'];
-        const legacyMap: Record<string, number> = {};
+        const legacyMap: Record<string, number> = {
+          'PP': 0, 'P': 0, 'M': 0, 'G': 0, 'GG': 0
+        };
         if (sizes.length === 1) {
-          legacyMap[sizes[0]] = initialProduct.estoque;
+          legacyMap[sizes[0]] = Math.max(0, initialProduct.estoque || 0);
         } else {
           sizes.forEach((s, i) => {
-            legacyMap[s] = i === 0 ? initialProduct.estoque : 0;
+            legacyMap[s] = i === 0 ? Math.max(0, initialProduct.estoque || 0) : 0;
           });
         }
+        Object.keys(legacyMap).forEach(sz => {
+          legacyMap[sz] = Math.max(0, Number(legacyMap[sz]) || 0);
+        });
         setSizeStocks(legacyMap);
       }
     } else {
-      // Clear for new product
+      // Clear for new product with PP, P, M, G, GG default to 0 as requested
       setNome('');
       setPreco('');
       setCategoria(PRESET_CATEGORIES[0]);
       setDescricao('');
       setImagem('');
-      setSizeStocks({ 'PP': 2, 'P': 5, 'M': 5, 'G': 5, 'GG': 2 });
+      setSizeStocks({ 'PP': 0, 'P': 0, 'M': 0, 'G': 0, 'GG': 0 });
       
       // Clear new fields
       setEmPromocao(false);
@@ -284,8 +301,16 @@ export default function ProductForm({ isOpen, onClose, onSubmit, initialProduct 
       return;
     }
 
-    const totalEstoque = (Object.values(sizeStocks) as number[]).reduce((acc, curr) => acc + curr, 0);
-    const tamanhoString = Object.keys(sizeStocks).join(', ');
+    // Sanitize size stocks to guarantee no negative numbers exist
+    const sanitizedStocks: Record<string, number> = {};
+    Object.entries(sizeStocks).forEach(([sz, val]) => {
+      sanitizedStocks[sz] = Math.max(0, Number(val) || 0);
+    });
+
+    const totalEstoque = (Object.values(sanitizedStocks) as number[]).reduce((acc, curr) => acc + curr, 0);
+    const tamanhoString = Object.keys(sanitizedStocks)
+      .filter(sz => sanitizedStocks[sz] > 0 || ['PP', 'P', 'M', 'G', 'GG'].includes(sz))
+      .join(', ');
 
     // Validate Promotional fields
     const parsedPromoPrice = emPromocao ? parseFloat(precoPromocional) : undefined;
@@ -311,7 +336,7 @@ export default function ProductForm({ isOpen, onClose, onSubmit, initialProduct 
         descricao: descricao.trim(),
         imagem: imagem.trim() || 'https://images.unsplash.com/photo-1540221129048-8e178929e52b?w=600&auto=format&fit=crop&q=80', // stylish empty apparel fallback
         estoque: totalEstoque,
-        tamanhos_estoque: sizeStocks,
+        tamanhos_estoque: sanitizedStocks,
         preco_promocional: emPromocao ? parsedPromoPrice : null,
         em_promocao: emPromocao,
         destaque: destaque,
@@ -439,58 +464,102 @@ export default function ProductForm({ isOpen, onClose, onSubmit, initialProduct 
 
             {/* Sizing & Stocks Grid Section */}
             <div className="md:col-span-2 border border-pink-100 bg-pink-50/20 p-4 rounded-2xl space-y-4">
-              <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2">
+              <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2 border-b border-pink-100/30 pb-2">
                 <div>
                   <h4 className="text-xs font-bold text-slate-800 uppercase tracking-widest flex items-center gap-1.5">
                     <Layers className="w-4 h-4 text-pink-500" />
-                    Grade de Tamanhos & Estoques
+                    Controle de Estoque por Tamanho
                   </h4>
                   <p className="text-[10px] text-slate-500 mt-0.5">
-                    Selecione os tamanhos que possui e informe o estoque de cada um. O estoque total será preenchido automaticamente.
+                    Insira a quantidade em estoque para os tamanhos principais ou gerencie tamanhos adicionais.
                   </p>
                 </div>
                 
-                <span className="self-start sm:self-center px-2.5 py-1 bg-pink-100 text-pink-700 text-[10px] font-black rounded-lg uppercase tracking-wider whitespace-nowrap">
-                  Total da Grade: {(Object.values(sizeStocks) as number[]).reduce((acc, curr) => acc + curr, 0)} pçs
+                <span className="self-start sm:self-center px-2.5 py-1 bg-pink-600 text-white text-[10px] font-black rounded-lg uppercase tracking-wider whitespace-nowrap shadow-sm">
+                  Estoque Total: {(Object.values(sizeStocks) as number[]).reduce((sum, q) => sum + Number(q || 0), 0)} pçs
                 </span>
               </div>
 
-              {/* Fast size toggle pills */}
+              {/* Grid with fields for PP, P, M, G, GG */}
               <div className="space-y-1.5">
-                <span className="text-[10px] font-bold text-slate-500 uppercase">Tamanhos Disponíveis (Clique para ativar):</span>
-                <div className="flex flex-wrap gap-1.5">
-                  {PRESET_SIZES.map((size) => {
-                    const isActive = sizeStocks.hasOwnProperty(size);
+                <span className="text-[10px] font-bold text-slate-500 uppercase tracking-wider block">Estoque por Tamanho (PP, P, M, G, GG):</span>
+                <div className="grid grid-cols-5 gap-2 bg-white p-3 rounded-xl border border-slate-200 shadow-sm">
+                  {[
+                    { key: 'PP', label: 'PP' },
+                    { key: 'P', label: 'P' },
+                    { key: 'M', label: 'M' },
+                    { key: 'G', label: 'G' },
+                    { key: 'GG', label: 'GG' },
+                  ].map(({ key, label }) => {
+                    const qty = sizeStocks[key] !== undefined ? sizeStocks[key] : 0;
                     return (
-                      <button
-                        key={size}
-                        type="button"
-                        onClick={() => handleToggleSize(size)}
-                        className={`px-2.5 py-1 text-[11px] font-semibold rounded-lg border transition cursor-pointer ${
-                          isActive 
-                            ? 'bg-pink-600 border-pink-600 text-white shadow-xs font-bold' 
-                            : 'bg-white border-slate-200 text-slate-600 hover:border-pink-300 hover:bg-pink-50/10'
-                        }`}
-                      >
-                        {size}
-                      </button>
+                      <div key={key} className="flex flex-col items-center gap-1 p-2 bg-slate-50/50 rounded-lg border border-slate-150 text-center">
+                        <span className="text-xs font-extrabold text-pink-700">{label}</span>
+                        <input
+                          type="number"
+                          min="0"
+                          required
+                          value={qty}
+                          onChange={(e) => {
+                            const val = parseInt(e.target.value, 10);
+                            const cleanVal = isNaN(val) ? 0 : Math.max(0, val);
+                            setSizeStocks(prev => ({
+                              ...prev,
+                              [key]: cleanVal
+                            }));
+                          }}
+                          className="block w-full px-1.5 py-1 text-center bg-white border border-slate-250 rounded-md text-xs font-bold focus:outline-none focus:ring-2 focus:ring-pink-500 text-slate-900"
+                          placeholder="0"
+                        />
+                      </div>
                     );
                   })}
                 </div>
               </div>
 
-              {/* Custom Add Size Form Row */}
-              <div className="flex gap-2 items-end pt-1 border-t border-slate-150/40">
-                <div className="flex-1 max-w-[200px]">
-                  <label className="block text-[9px] font-bold text-slate-500 uppercase tracking-wider mb-1">
-                    Adicionar Outro Tamanho / Número
-                  </label>
+              {/* Manage extra custom sizes if needed */}
+              {Object.keys(sizeStocks).some(sz => !['PP', 'P', 'M', 'G', 'GG'].includes(sz)) && (
+                <div className="space-y-1.5 pt-2 border-t border-slate-150/40">
+                  <span className="text-[10px] font-bold text-slate-400 uppercase tracking-widest block">Outros Tamanhos Cadastrados:</span>
+                  <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-2 bg-white p-2.5 rounded-xl border border-slate-200">
+                    {Object.entries(sizeStocks)
+                      .filter(([sz]) => !['PP', 'P', 'M', 'G', 'GG'].includes(sz))
+                      .map(([sz, stock]) => (
+                        <div key={sz} className="relative bg-slate-50 p-2 rounded-lg border border-slate-200 flex flex-col justify-between gap-1">
+                          <button
+                            type="button"
+                            onClick={() => handleRemoveSize(sz)}
+                            className="absolute top-1 right-1 p-0.5 text-slate-400 hover:text-rose-600 rounded-md hover:bg-rose-50 transition cursor-pointer"
+                            title="Remover"
+                          >
+                            <X className="w-3 h-3" />
+                          </button>
+                          
+                          <span className="text-[10px] font-extrabold text-slate-700 pr-4">{sz}</span>
+                          <input
+                            type="number"
+                            min="0"
+                            required
+                            value={stock}
+                            onChange={(e) => handleUpdateStock(sz, e.target.value)}
+                            className="block w-full px-1.5 py-0.5 bg-white border border-slate-300 rounded text-xs font-semibold focus:outline-none focus:ring-2 focus:ring-pink-500 text-slate-950"
+                          />
+                        </div>
+                      ))}
+                  </div>
+                </div>
+              )}
+
+              {/* Minimal field to add custom and non-standard sizes */}
+              <div className="flex flex-col sm:flex-row gap-2 items-start sm:items-center justify-between pt-2 border-t border-slate-150/40">
+                <span className="text-[9px] text-slate-400 font-bold uppercase tracking-wider">Incluir Tamanho Adicional (Ex: G1, EG, Único):</span>
+                <div className="flex gap-2">
                   <input
                     type="text"
-                    placeholder="Ex: 48, G1, Único"
+                    placeholder="Tamanho..."
                     value={customSizeInput}
                     onChange={(e) => setCustomSizeInput(e.target.value)}
-                    className="block w-full px-3 py-1.5 bg-white border border-slate-200 rounded-xl text-xs font-medium focus:outline-none focus:ring-2 focus:ring-pink-500 text-slate-900"
+                    className="block w-24 px-2.5 py-1 bg-white border border-slate-200 rounded-lg text-xs font-semibold text-slate-900"
                     onKeyDown={(e) => {
                       if (e.key === 'Enter') {
                         e.preventDefault();
@@ -498,52 +567,15 @@ export default function ProductForm({ isOpen, onClose, onSubmit, initialProduct 
                       }
                     }}
                   />
+                  <button
+                    type="button"
+                    onClick={handleAddCustomSize}
+                    className="px-2.5 py-1 bg-slate-800 hover:bg-slate-900 select-none text-white rounded-lg text-xs font-bold cursor-pointer transition shadow-xs"
+                  >
+                    + Adicionar
+                  </button>
                 </div>
-                <button
-                  type="button"
-                  onClick={handleAddCustomSize}
-                  className="px-3.5 py-2 bg-slate-800 hover:bg-slate-900 text-white rounded-xl text-xs font-bold transition flex items-center justify-center cursor-pointer shadow-sm"
-                >
-                  + Incluir
-                </button>
               </div>
-
-              {/* Table or Grid of active custom stocks */}
-              {Object.keys(sizeStocks).length > 0 ? (
-                <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-3 bg-white p-3 rounded-xl border border-slate-200 shadow-inner">
-                  {Object.entries(sizeStocks).map(([sz, stock]) => (
-                    <div key={sz} className="relative bg-slate-50 p-2.5 rounded-lg border border-slate-200 flex flex-col justify-between gap-1 group">
-                      <button
-                        type="button"
-                        onClick={() => handleRemoveSize(sz)}
-                        className="absolute top-1 right-1 p-0.5 text-slate-400 hover:text-rose-600 rounded-md hover:bg-rose-50 transition cursor-pointer"
-                        title="Remover tamanho"
-                      >
-                        <X className="w-3.5 h-3.5" />
-                      </button>
-                      
-                      <span className="text-xs font-black text-pink-700 pr-5">{sz}</span>
-                      
-                      <div className="space-y-0.5">
-                        <span className="text-[8px] text-slate-400 font-bold uppercase block">Estoque</span>
-                        <input
-                          type="number"
-                          min="0"
-                          required
-                          value={stock}
-                          onChange={(e) => handleUpdateStock(sz, e.target.value)}
-                          placeholder="0"
-                          className="block w-full px-2 py-1 bg-white border border-slate-300 rounded-md text-xs font-semibold focus:outline-none focus:ring-2 focus:ring-pink-500 text-slate-900"
-                        />
-                      </div>
-                    </div>
-                  ))}
-                </div>
-              ) : (
-                <div className="p-6 text-center border border-dashed border-slate-250 rounded-xl bg-white text-slate-400 text-xs">
-                  Nenhum tamanho ativo. Selecione tamanhos rápidos acima para montar sua grade.
-                </div>
-              )}
             </div>
 
             {/* Imagem do Produto com Opção de Upload */}
