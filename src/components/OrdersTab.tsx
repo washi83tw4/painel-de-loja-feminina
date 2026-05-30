@@ -387,6 +387,7 @@ export default function OrdersTab({ onShowNotification }: OrdersTabProps) {
                     <th className="py-3 px-4">Cliente</th>
                     <th className="py-3 px-4 text-center">Itens</th>
                     <th className="py-3 px-4 text-right">Valor Total</th>
+                    <th className="py-3 px-4 text-center">Baixa Estoque</th>
                     <th className="py-3 px-4 text-center">Status</th>
                     <th className="py-3 px-4 text-right">Ação</th>
                   </tr>
@@ -424,6 +425,21 @@ export default function OrdersTab({ onShowNotification }: OrdersTabProps) {
                         {/* Total */}
                         <td className="py-3.5 px-4 text-right font-extrabold text-slate-900">
                           {Number(order.total || 0).toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' })}
+                        </td>
+                        
+                        {/* Baixa Estoque */}
+                        <td className="py-3.5 px-4 text-center">
+                          {order.estoque_baixado ? (
+                            <span className="inline-flex items-center gap-1.5 px-2.5 py-1 bg-emerald-50 border border-emerald-150 text-emerald-700 text-[10px] font-bold rounded-full whitespace-nowrap">
+                              <Check className="w-3.5 h-3.5 text-emerald-600 shrink-0" />
+                              <span>Estoque baixado</span>
+                            </span>
+                          ) : (
+                            <span className="inline-flex items-center gap-1.5 px-2.5 py-1 bg-amber-50 border border-amber-150 text-amber-700 text-[10px] font-bold rounded-full whitespace-nowrap">
+                              <Clock className="w-3.5 h-3.5 text-amber-500 shrink-0" />
+                              <span>Aguardando baixa</span>
+                            </span>
+                          )}
                         </td>
                         
                         {/* Status */}
@@ -483,11 +499,24 @@ export default function OrdersTab({ onShowNotification }: OrdersTabProps) {
                         </span>
                       </div>
 
-                      <span className={`inline-flex items-center gap-1.5 px-2.5 py-1 border rounded-full text-[10px] font-bold tracking-wide ${statusInfo.bg}`}>
-                        <span className={`w-1.5 h-1.5 rounded-full ${statusInfo.dot}`}></span>
-                        <StatusIcon className="w-3 h-3 shrink-0" />
-                        <span>{statusInfo.label}</span>
-                      </span>
+                      <div className="flex flex-col items-end gap-1 px-1">
+                        <span className={`inline-flex items-center gap-1.5 px-2.5 py-1 border rounded-full text-[10px] font-bold tracking-wide ${statusInfo.bg}`}>
+                          <span className={`w-1.5 h-1.5 rounded-full ${statusInfo.dot}`}></span>
+                          <StatusIcon className="w-3 h-3 shrink-0" />
+                          <span>{statusInfo.label}</span>
+                        </span>
+                        {order.estoque_baixado ? (
+                          <span className="inline-flex items-center gap-1 px-2 py-0.5 bg-emerald-50 border border-emerald-100 text-emerald-700 text-[9px] font-bold rounded-full">
+                            <Check className="w-2.5 h-2.5 text-emerald-600 shrink-0" />
+                            <span>Estoque baixado</span>
+                          </span>
+                        ) : (
+                          <span className="inline-flex items-center gap-1 px-2 py-0.5 bg-amber-50 border border-amber-100 text-amber-700 text-[9px] font-bold rounded-full">
+                            <Clock className="w-2.5 h-2.5 text-amber-500 shrink-0" />
+                            <span>Aguardando baixa</span>
+                          </span>
+                        )}
+                      </div>
                     </div>
 
                     <div className="pt-2">
@@ -585,6 +614,28 @@ export default function OrdersTab({ onShowNotification }: OrdersTabProps) {
                     );
                   })}
                 </div>
+              </div>
+
+              {/* Stock Deduction Status */}
+              <div className="p-3.5 bg-slate-50 border border-slate-200 rounded-xl flex flex-col sm:flex-row items-center justify-between gap-2.5">
+                <div className="flex items-center gap-2">
+                  <Package className="w-4 h-4 text-slate-500" />
+                  <div>
+                    <span className="font-bold text-slate-800 text-[10px] uppercase tracking-wider block">Controle de Estoque do Pedido</span>
+                    <span className="text-[9px] text-slate-400 block font-medium">A baixa no estoque é efetuada automaticamente na loja mediante pagamento aprovado</span>
+                  </div>
+                </div>
+                {selectedOrder.estoque_baixado ? (
+                  <span className="inline-flex items-center gap-1.5 px-3 py-1 bg-emerald-50 border border-emerald-200 text-emerald-700 text-[10px] font-black rounded-lg">
+                    <Check className="w-3.5 h-3.5 text-emerald-600" />
+                    ESTOQUE BAIXADO &bull; OK
+                  </span>
+                ) : (
+                  <span className="inline-flex items-center gap-1.5 px-3 py-1 bg-amber-50 border border-amber-200 text-amber-700 text-[10px] font-black rounded-lg">
+                    <Clock className="w-3.5 h-3.5 text-amber-500" />
+                    AGUARDANDO BAIXA
+                  </span>
+                )}
               </div>
 
               {/* 2 Grid columns: Customer Info / Address Info */}

@@ -45,6 +45,7 @@ export interface Order {
   items: OrderItem[];
   total: number;
   status: 'novo' | 'em separação' | 'enviado' | 'entregue' | 'cancelado';
+  estoque_baixado?: boolean;
 }
 
 export interface SupabaseConfig {

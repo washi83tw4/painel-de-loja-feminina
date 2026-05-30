@@ -355,12 +355,12 @@ export default function ProductTable({ products, onEditClick, onDeleteClick, onA
                       Preço <ArrowUpDown className="w-3 h-3 inline-block ml-1" />
                     </th>
                     <th className="py-3 px-4 w-28 text-center">Categoria</th>
-                    <th className="py-3 px-4 w-20 text-center">Tamanho</th>
+                    <th className="py-3 px-4 text-center">Grade de Estoque / Tamanhos</th>
                     <th 
                       onClick={() => handleSort('estoque')}
                       className="py-3 px-4 cursor-pointer hover:bg-slate-100/80 transition text-center whitespace-nowrap"
                     >
-                      Estoque <ArrowUpDown className="w-3 h-3 inline-block ml-1" />
+                      Estoque Total <ArrowUpDown className="w-3 h-3 inline-block ml-1" />
                     </th>
                     <th className="py-3 px-4 w-28 text-right">Ações</th>
                   </tr>

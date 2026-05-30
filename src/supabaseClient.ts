@@ -176,7 +176,8 @@ const initialMockOrders: Order[] = [
       }
     ],
     total: 349.80,
-    status: 'novo'
+    status: 'novo',
+    estoque_baixado: false
   },
   {
     id: 'ord-1002',
@@ -192,7 +193,7 @@ const initialMockOrders: Order[] = [
     address_neighborhood: 'Copacabana',
     address_city: 'Rio de Janeiro',
     address_state: 'RJ',
-    notes: 'Embalar para presente, é aniversário da minha irmã!',
+    notes: 'Embalar para presente, é aniversário da minha irmão!',
     items: [
       {
         id: 'prod-5',
@@ -204,7 +205,8 @@ const initialMockOrders: Order[] = [
       }
     ],
     total: 299.90,
-    status: 'em separação'
+    status: 'em separação',
+    estoque_baixado: false
   },
   {
     id: 'ord-1003',
@@ -232,7 +234,8 @@ const initialMockOrders: Order[] = [
       }
     ],
     total: 458.00,
-    status: 'enviado'
+    status: 'enviado',
+    estoque_baixado: true
   },
   {
     id: 'ord-1004',
@@ -260,7 +263,8 @@ const initialMockOrders: Order[] = [
       }
     ],
     total: 159.90,
-    status: 'entregue'
+    status: 'entregue',
+    estoque_baixado: true
   }
 ];
 
